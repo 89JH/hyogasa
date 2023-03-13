@@ -1,0 +1,149 @@
+{
+  "name": "unnamed_series",
+  "ohlc": [
+    {
+      "endTime": 1677807848000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 9715.77648675,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807849000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2182.52867335,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807850000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 319.0,
+      "volume": 7905.33206512,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807851000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2959.43125,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807852000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 319.0,
+      "volume": 9434.65805558,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807853000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 319.0,
+      "volume": 15452.06734172,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807854000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 1245.96764117,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807855000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 157.37929143,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807856000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 896.90739883,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807857000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 20.0,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807858000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2075.39768474,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807859000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 319.0,
+      "volume": 9519.04999881,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807860000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 4805.03998421,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807861000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2203.1478456,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807862000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2203.1478456,
+      "amount": 0
+    },
+    {
+      "endTime": 1677807863000,
+      "openPrice": 314.0,
+      "highPrice": 329.0,
+      "lowPrice": 296.0,
+      "closePrice": 320.0,
+      "volume": 2203.1478456,
+      "amount": 0
+    }
+  ]
+}

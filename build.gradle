@@ -1,0 +1,78 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.0'
+	id 'io.spring.dependency-management' version '1.1.0'
+}
+
+group = 'com.hyogasa'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '14'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2'
+	implementation 'org.springframework.session:spring-session-jdbc'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'mysql:mysql-connector-java'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"	// 2023-02-19 추가 configration 어노테이션떄문에
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// 20230205 bithumb api용 추가
+	implementation 'org.codehaus.jackson:jackson-core-asl:1.9.11'
+	implementation 'commons-codec:commons-codec:1.10'
+	implementation 'com.google.guava:guava:18.0'
+	implementation 'xerces:xercesImpl:2.12.2'
+	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+	// Okhttp
+	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+
+	// 20230218 추가 https://mvnrepository.com/artifact/com.auth0/java-jwt
+	implementation("com.auth0:java-jwt:4.2.1")
+
+	// 20230219 mybatis 쿼리 로그 찍기 위해 추가
+	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+
+	// Bucket4J? 요청한도(트래픽) api호출 혹은 제한 하기 위한 라이브러리(동일 기능을 하는 라이브러리는 RateLimiter, RateLimitJ 등도 있다.)
+	implementation group: 'com.github.vladimir-bukhtoyarov', name: 'bucket4j-core', version: '7.0.0'
+
+    // 요청한도 트래픽 제한 라이브러리 RateLimitJ
+    implementation("es.moki.ratelimitj:ratelimitj-inmemory:0.7.0")
+
+	// ta4j 각종 indicator https://mvnrepository.com/artifact/org.ta4j/ta4j-core
+	implementation("org.ta4j:ta4j-core:0.15")
+
+	// joda time? https://mvnrepository.com/artifact/joda-time/joda-time
+	implementation("joda-time:joda-time:2.10.10")
+
+	// Gson 사용 - 20230305 Gson은 느리다고 하여 사용 안함 https://mvnrepository.com/artifact/com.google.code.gson/gson
+	implementation("com.google.code.gson:gson:2.10")
+
+	// OpenCsv csv 파싱용 https://mvnrepository.com/artifact/com.opencsv/opencsv
+	implementation("com.opencsv:opencsv:5.7.1")
+
+	// jsp 파싱용
+	implementation('org.apache.tomcat.embed:tomcat-embed-jasper')
+	implementation('javax.servlet:jstl:1.2')
+
+	// 크롤링 https://mvnrepository.com/artifact/org.jsoup/jsoup
+	implementation("org.jsoup:jsoup:1.15.3")
+
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hyogasa.hgs2.model.dao.UpbitMapper">
+    <select id="getAbratioList" resultType="com.hyogasa.hgs2.model.dto.abratio">
+        SELECT *
+          FROM TBC_ABRATIO;
+    </select>
+
+
+    <select id="getPreCandle" resultType="map">
+        WITH TT AS(
+           SELECT LAG(VOLUME) OVER(ORDER BY NAME, CRE_DATE) AS VOL_PRE
+                 , CRE_DATE
+                 , NAME
+                 , FLOOR(MINUTE(CRE_DATE)/1) AS MMM
+                 , MAX(PRICE) PRICE
+                 , MAX(VOLUME) VOLUME
+             FROM input_data2
+            WHERE CRE_DATE BETWEEN DATE_ADD(NOW(), INTERVAL - 2 MINUTE) AND DATE_ADD(NOW(), INTERVAL + 2 MINUTE)
+              AND CRE_DATE BETWEEN DATE_ADD(CRE_DATE, INTERVAL - 1 MINUTE) AND DATE_ADD(CRE_DATE, INTERVAL + 1 MINUTE)
+           GROUP BY CRE_DATE
+                    , NAME
+        ), TT2 AS (
+          SELECT *
+               , ROUND(VOLUME, 2) AS TOTAL
+               , ROW_NUMBER() OVER(ORDER BY CRE_DATE, TOTAL DESC) AS RN
+            FROM TT
+           WHERE VOLUME >= 10000000
+        )
+
+        SELECT *
+          FROM TT2
+         <!-- WHERE RN <![CDATA[<=]]> 7 -->
+    </select>
+</mapper>
