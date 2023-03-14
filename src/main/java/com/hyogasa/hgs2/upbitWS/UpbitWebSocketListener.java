@@ -84,67 +84,78 @@ public class UpbitWebSocketListener extends WebSocketListener {
     public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString bytes) {
         JsonNode jsonNode = JsonUtil.fromJson(bytes.string(StandardCharsets.UTF_8), JsonNode.class);
 
+        //System.out.println("jsonNode - " + jsonNode);
+
         try {
             JSONParser parser = new JSONParser();
             JSONObject jObj = (JSONObject) parser.parse(String.valueOf(jsonNode));
 
-            if(jObj.get("type").equals("trade")) {
-                String utcDate = jObj.get("trade_date").toString();
-                String utcTime = jObj.get("trade_time").toString();
+            System.out.println("jObj.price - " + jObj.get("trade_price"));
+
+
+//            if(jObj.get("type").equals("ticker")) {
+//                System.out.println("1 - " + jObj.get("trade_price"));
+                String utcDate = jObj.get("trade_date").toString().substring(0, 4) + "-" + jObj.get("trade_date").toString().substring(4, 6) + "-" + jObj.get("trade_date").toString().substring(6, 8);
+                String utcTime = jObj.get("trade_time").toString().substring(0, 2) + ":" + jObj.get("trade_time").toString().substring(2, 4) + ":" + jObj.get("trade_time").toString().substring(4, 6);
                 String bTs = utcDate + "T" + utcTime + "Z";
 
+//                System.out.println("utcDat - " + utcDate);
+//                System.out.println("utcTim - " + utcTime);
+
                 String ts = Util.convertUtctoLocal3(bTs);
-                //String op = String.valueOf(jObj.get("opening_price"));
-                //String hp = String.valueOf(jObj.get("high_price"));
-                //String lp = String.valueOf(jObj.get("low_price"));
+                String op = String.valueOf(jObj.get("opening_price"));
+                String hp = String.valueOf(jObj.get("high_price"));
+                String lp = String.valueOf(jObj.get("low_price"));
                 String cp = String.valueOf(jObj.get("trade_price"));
                 String vol = String.valueOf(jObj.get("trade_volume"));
-                String ab = String.valueOf(jObj.get("ask_bid"));
 
-                //BarSeries series = WSLoader.loadSeries(ts, op, hp, lp, cp, vol);
-                // WebSocket 오프닝, 클로즈, 저가 사용 안하고 현재가만 사용해서 처리 가능 
+                BarSeries series = WSLoader.loadSeries(ts, op, hp, lp, cp, vol);
+                // WebSocket 오프닝, 클로즈, 저가 사용 안하고 현재가만 사용해서 처리 가능
                 // 추후 필요하면 type - ticker(현재가) 분기 태워서 사용
-                BarSeries series = WSLoader.loadSeries(ts, cp, cp, cp, cp, vol);
+                //BarSeries series = WSLoader.loadSeries(ts, cp, cp, cp, cp, vol);
 
                 //System.out.println("ts - " + ts.substring(0, 10).replaceAll("-", ""));
 
                 String coinName = String.valueOf(jObj.get("code"));
                 String tradeDate = ts.substring(0, 10).replaceAll("-", "");
 
-                CsvBarLoader.persistSeries(series, tradeDate, coinName, ab);
+                CsvBarLoader.persistSeries(series, tradeDate, coinName);
+                // 2023-03-14 저장하는데까지는 느리지 않음.
 
-                ParabolicSarIndicator pi = new ParabolicSarIndicator(series);
 
                 // 2023-03-09 Duration은 60이 대략 맞음.
-                ClosePriceIndicator closePrice = new ClosePriceIndicator(CsvBarLoader.loadSeries(tradeDate, coinName, 60));
+                //ClosePriceIndicator closePrice = new ClosePriceIndicator(CsvBarLoader.loadSeries(tradeDate, coinName, 60));
 
 //            System.out.println("cloPrice - " + closePrice.getValue(0));
 //
                 //System.out.println("closePrice - " + closePrice.getBarSeries().getBarData());
 //
 ////
+                //ParabolicSarIndicator pi = new ParabolicSarIndicator(CsvBarLoader.loadSeries(tradeDate, coinName, 60));
                 //MONEYFl
-                MACDIndicator macd = new MACDIndicator(closePrice, 12, 26);
-                EMAIndicator signal = new EMAIndicator(macd, 9);
+                //MACDIndicator macd = new MACDIndicator(closePrice, 12, 26);
+                //EMAIndicator signal = new EMAIndicator(macd, 9);
 
                 //ChaikinMoneyFlowIndicator mfi = new ChaikinMoneyFlowIndicator(closePrice, 1);
 
                 //System.out.println("0번째 엔드타임 - " + closePrice.getBarSeries().getBar(closePrice.getBarSeries().getBarCount() - 1).getEndTime());
-                RSIIndicator rsi = new RSIIndicator(closePrice, 14);
-
-                System.out.println("----------------------------- 시작 -----------------------------");
-                System.out.println(coinName + " / endTime - " + closePrice.getBarSeries().getBar(closePrice.getBarSeries().getBarCount() - 1).getEndTime());
-                System.out.println("macd - " + macd.getValue(macd.getBarSeries().getBarCount() - 1));
-                System.out.println("emaMacd - " + signal.getValue(signal.getBarSeries().getBarCount() - 1));
-                System.out.println("rsi - " + rsi.getValue(rsi.getBarSeries().getBarCount() - 1));
-                System.out.println("----------------------------- 종료 -----------------------------");
+                //RSIIndicator rsi = new RSIIndicator(closePrice, 14);
+//
+//                System.out.println("----------------------------- 시작 -----------------------------");
+//                System.out.println("2 - " + jObj.get("trade_price"));
+//                System.out.println(coinName + " / endTime - " + closePrice.getBarSeries().getBar(closePrice.getBarSeries().getBarCount() - 1).getEndTime());
+//                System.out.println("macd - " + macd.getValue(macd.getBarSeries().getBarCount() - 1));
+//                System.out.println("signal - " + signal.getValue(signal.getBarSeries().getBarCount() - 1));
+//                System.out.println("parabolic - " + pi.getValue(pi.getBarSeries().getBarCount() - 1));
+//                System.out.println("rsi - " + rsi.getValue(rsi.getBarSeries().getBarCount() - 1));
+//                System.out.println("----------------------------- 종료 -----------------------------");
 
 
                 //double rsiVal = Double.parseDouble(rsi.getValue(rsi.getBarSeries().getBarCount() - 1).getDelegate().toString());
 
-                BigDecimal rsiVal = new BigDecimal(rsi.getValue(rsi.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal macdVal = new BigDecimal(macd.getValue(macd.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal signalVal = new BigDecimal(signal.getValue(signal.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
+                //BigDecimal rsiVal = new BigDecimal(rsi.getValue(rsi.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
+                //BigDecimal macdVal = new BigDecimal(macd.getValue(macd.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
+                //BigDecimal signalVal = new BigDecimal(signal.getValue(signal.getBarSeries().getBarCount() - 1).getDelegate().toString()).setScale(2, RoundingMode.HALF_UP);
 
 
 
@@ -171,7 +182,7 @@ public class UpbitWebSocketListener extends WebSocketListener {
                 //ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 
 
-            }
+//            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

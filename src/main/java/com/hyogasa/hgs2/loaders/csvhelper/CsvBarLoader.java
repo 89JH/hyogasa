@@ -29,7 +29,7 @@ public class CsvBarLoader {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static void persistSeries(BarSeries series, String filename, String cn, String ab) throws ParseException {
+    public static void persistSeries(BarSeries series, String filename, String cn) throws ParseException {
         CsvBarSeries exportableSeries = CsvBarSeries.from(series, cn);
 
         BufferedWriter bw = null;
@@ -54,8 +54,7 @@ public class CsvBarLoader {
                     + "," + exportableSeries.ohlc.get("lowPrice")
                     + "," + exportableSeries.ohlc.get("closePrice")
                     + "," + exportableSeries.ohlc.get("volume")
-                    + "," + exportableSeries.ohlc.get("amount")
-                    + "," + ab;
+                    + "," + exportableSeries.ohlc.get("amount");
 
             bw.write(wData);
             bw.newLine();
@@ -76,7 +75,7 @@ public class CsvBarLoader {
         }
     }
 
-    public static BarSeries loadSeries(String td, String cn, int duration) {
+    public static BarSeries loadSeries(String cn, int duration) {
         // 2023-03-09 파일 명 앞에 일자 없애기 일자 변하면서 데이터가 정확해지지 않음.
         //String fileName = "src/main/resources/coin/" + cn + "/" + td + "_" + cn + ".csv";
         String fileName = "src/main/resources/coin/" + cn + "/" + cn + "_trade.csv";

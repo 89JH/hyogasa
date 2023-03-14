@@ -17,34 +17,31 @@ import java.util.List;
 
 @SpringBootApplication
 public class Hgs2Application {
-	public static void getCrowling() {
-		String url = "https://coinmarketcap.com/ko/";
-
-		List<String> list = new ArrayList<>();
-		Connection con = Jsoup.connect(url);
-		Document doc = null;
-
-		try {
-			doc = con.get();
-
-			System.out.println(doc);
-		}catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		System.out.println(doc.select("cmc-table-row"));
-
-
-
-	}
+//	public static void getCrowling() {
+//		String url = "https://coinmarketcap.com/ko/";
+//
+//		List<String> list = new ArrayList<>();
+//		Connection con = Jsoup.connect(url);
+//		Document doc = null;
+//
+//		try {
+//			doc = con.get();
+//
+//			System.out.println(doc);
+//		}catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//
+//		System.out.println(doc.select("cmc-table-row"));
+//	}
 
 
 	public static void main(String[] args) {
 		SpringApplication.run(Hgs2Application.class, args);
-		getCrowling();
-		//UpbitWsClient uwc = new UpbitWsClient("Oi0v0KwJU8GJZdbq72r2rWSJp4ctXjVAp0Wk38qx", "f5EMue3x1bVEFTsawOJDfp6xh8tPpPLWtiibhRVx");
+		//getCrowling();
+		UpbitWsClient uwc = new UpbitWsClient("Oi0v0KwJU8GJZdbq72r2rWSJp4ctXjVAp0Wk38qx", "f5EMue3x1bVEFTsawOJDfp6xh8tPpPLWtiibhRVx");
 
-		//uwc.AccWebSocket();
+		uwc.AccWebSocket();
 
 		//BaseBarSeries
 		//BarSeries
