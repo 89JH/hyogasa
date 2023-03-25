@@ -29,11 +29,11 @@ public class limtTradeTest {
 
         HashMap<String, String> rgParams = new HashMap<String, String>();
         rgParams.put("side", "bid");
-        rgParams.put("market", "KRW-PUNDIX");
-        rgParams.put("volume", "6");
-        rgParams.put("price", "850");
+        rgParams.put("market", "KRW-BTC");
+        rgParams.put("volume", "0.002");
+        rgParams.put("price", "37450000");
         rgParams.put("ord_type", "limit");
-        rgParams.put("identifier", "JHJ2023020401");
+        rgParams.put("identifier", "JHJ2023032403");
         String result = api.callApi("/v1/orders", "POST", rgParams);
 
 

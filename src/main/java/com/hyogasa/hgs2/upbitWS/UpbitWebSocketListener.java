@@ -90,9 +90,6 @@ public class UpbitWebSocketListener extends WebSocketListener {
             JSONParser parser = new JSONParser();
             JSONObject jObj = (JSONObject) parser.parse(String.valueOf(jsonNode));
 
-            System.out.println("jObj.price - " + jObj.get("trade_price"));
-
-
 //            if(jObj.get("type").equals("ticker")) {
 //                System.out.println("1 - " + jObj.get("trade_price"));
                 String utcDate = jObj.get("trade_date").toString().substring(0, 4) + "-" + jObj.get("trade_date").toString().substring(4, 6) + "-" + jObj.get("trade_date").toString().substring(6, 8);

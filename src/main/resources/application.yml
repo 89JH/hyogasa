@@ -10,7 +10,7 @@ spring:
         #url: jdbc:mysql://localhost:3306/test?characterEncoding=UTF-8
         url: jdbc:log4jdbc:mysql://localhost:3306/test?characterEncoding=UTF-8
         username: root
-        password: fksl123
+        password: "!Qq1157338"
     jpa:
         databse: mysql
         show-sql: true
@@ -25,6 +25,13 @@ spring:
         view:
             prefix: /WEB-INF/jsp/
             suffix: .jsp
+
+    # Table schema.spring_session doesn't exists 발생시
+    session:
+        store-type: jdbc
+        jdbc:
+            initialize-schema: always
+        timeout: 900
 
 #Mybatis 설정
 mybatis:

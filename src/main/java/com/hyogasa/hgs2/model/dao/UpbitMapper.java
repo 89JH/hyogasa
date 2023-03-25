@@ -14,4 +14,6 @@ public interface UpbitMapper {
 
     // 이전 캔들 대비 거래량 조회
     List<Map<String, Object>> getPreCandle();
+
+    void insertData(Map<String, String> map);
 }

@@ -3,8 +3,10 @@ package com.hyogasa.hgs2.loaders.csvhelper;
 import com.google.gson.Gson;
 import com.hyogasa.hgs2.loaders.jsonhelper.GsonBarSeries;
 import com.hyogasa.hgs2.loaders.jsonhelper.JSONBarSeries;
+import com.hyogasa.hgs2.service.TradeUpbitService;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -18,10 +20,18 @@ import org.ta4j.core.BaseBarSeries;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.StandardCopyOption;
 import java.time.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.*;
+
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class CsvBarLoader {
 
@@ -29,21 +39,82 @@ public class CsvBarLoader {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static void persistSeries(BarSeries series, String filename, String cn) throws ParseException {
+    public static void persistSeries(BarSeries series, String filename, String cn) {
         CsvBarSeries exportableSeries = CsvBarSeries.from(series, cn);
 
         BufferedWriter bw = null;
-        File f = new File("src/main/resources/coin/" + cn + "/");
+
+        /** 폴더 생성 시작 */
+        Path path = Paths.get("src/main/resources/coin/" + cn + "/");
 
         // 폴더가 없으면
-        if(!f.exists()) {
-            f.mkdir(); // 폴더 생성
+        if(!Files.exists(path)) {
+            // 폴더 생성
+            try {
+                Files.createDirectory(path);
+            }catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         }
+        /** 폴더 생성 종료 */
 
+        /** 파일, 데이터 생성 시작 */
         try {
             // 2023-03-09 파일 명 앞에 일자 없애기 일자 변하면서 데이터가 정확해지지 않음.
             //File ff = new File("src/main/resources/coin/" + cn + "/" + filename + "_" + cn + ".csv");
-            File ff = new File("src/main/resources/coin/" + cn + "/" + cn + "_trade.csv");
+            String filePath = "src/main/resources/coin/" + cn + "/" + cn + "_trade.csv";
+            File ff = new File(filePath);
+
+            double bytes = ff.length();
+            double kilo = bytes / 1024;
+            double mega = (bytes / 1024) / 1024;
+
+            if(mega > 1.3) {
+                LOG.info("파일 크기 1.3메가 초과 mega - " + mega);
+                File file = new File(filePath);
+                File newFile = new File("src/main/resources/coin/" + cn + "/" + cn + "_trade" + new DateTime().getMillis() + ".csv");
+
+                // StandardCopyOption.REPLACE_EXISTING : 기존에 파일이 있더라도 덮어쓰기
+                Files.copy(file.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                Path fileData = Paths.get(filePath);
+                try {
+                    // 파일 데이터 읽기
+                    RandomAccessFile accFile = new RandomAccessFile(filePath, "r");
+                    // 기존 파일에 덮어쓸 라인 담아두는 변수
+                    StringBuffer lastLine = new StringBuffer();
+                    // 가장 최근 30000라인만 복사해서 넘기기
+                    // 기본적으로 3만 라인은 있어야 비슷하게 지표가 맞는다.
+                    // 위에는 틀렸다. 대략 1시간 데이터만 남겨놓으면 될듯하다 15천 라인 이상인 경우에 파일 재생성
+                    // 그냥 대략적으로 5천라인 가지고 진행 - 20230323
+                    long lineCount = 5000;
+                    // 불러온 파일 크기 구하기
+                    long fileLength = accFile.length();
+                    // 마지막 부터 차례로 조회
+                    for(long i=fileLength - 1; i>=0; i--) {
+                        accFile.seek(i);
+                        // 개행(new line) 찾기
+                        char c = (char) accFile.read();
+                        // 찾을때마다 카운트 마이너스
+                        if(c == '\n') {
+                            lineCount--;
+                            if(lineCount == 0) {
+                                break;
+                            }
+                        }
+                        lastLine.insert(0, c);
+                    }
+
+                    // 마지막 문자 제거
+                    lastLine.deleteCharAt(lastLine.length() - 1);
+
+                    Files.write(fileData, Collections.singleton(lastLine));
+                }catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+
+            }
+
             bw = new BufferedWriter(new FileWriter(ff, true));
             String wData = "";
 
@@ -58,7 +129,6 @@ public class CsvBarLoader {
 
             bw.write(wData);
             bw.newLine();
-
             //LOG.info("Bar series '" + exportableSeries.ohlc.get("coinName") + "' successfully saved to '" + filename + "'");
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,6 +143,7 @@ public class CsvBarLoader {
                 }
             }
         }
+        /** 파일, 데이터 생성 종료 */
     }
 
     public static BarSeries loadSeries(String cn, int duration) {
@@ -86,6 +157,7 @@ public class CsvBarLoader {
         try {
             csvReader = new CSVReader(new FileReader(fileName));
             lines = csvReader.readAll();
+            //System.out.println(lines);
         }catch (Exception e) {
             //Logger.getLogger(CsvBarLoader.class.getName()).log(Level.SEVERE, "Unable to load trades from CSV", e);
         }finally {

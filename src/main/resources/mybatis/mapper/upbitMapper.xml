@@ -32,4 +32,23 @@
           FROM TT2
          <!-- WHERE RN <![CDATA[<=]]> 7 -->
     </select>
+
+    <insert id="insertData">
+        INSERT INTO inditest(
+            credate
+            , price
+            , macd
+            , macdsignal
+            , parabolic
+            , rsi
+        )
+        VALUES(
+            #{CREDATE}
+            ,#{PRICE}
+            ,#{MACD}
+            ,#{MACDSIGNAL}
+            ,#{PARABOLIC}
+            ,#{RSI}
+        )
+    </insert>
 </mapper>

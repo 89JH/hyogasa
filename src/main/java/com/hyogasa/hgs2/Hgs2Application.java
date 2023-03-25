@@ -39,7 +39,7 @@ public class Hgs2Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Hgs2Application.class, args);
 		//getCrowling();
-		UpbitWsClient uwc = new UpbitWsClient("Oi0v0KwJU8GJZdbq72r2rWSJp4ctXjVAp0Wk38qx", "f5EMue3x1bVEFTsawOJDfp6xh8tPpPLWtiibhRVx");
+		UpbitWsClient uwc = new UpbitWsClient();
 
 		uwc.AccWebSocket();
 
