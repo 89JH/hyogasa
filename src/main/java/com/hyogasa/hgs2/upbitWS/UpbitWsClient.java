@@ -1,24 +1,10 @@
 package com.hyogasa.hgs2.upbitWS;
 
-import com.google.gson.JsonArray;
-import com.hyogasa.hgs2.api.ApiClient;
-import com.hyogasa.hgs2.loaders.csvhelper.CsvBarLoader;
-import com.hyogasa.hgs2.model.dao.UpbitMapper;
-import com.hyogasa.hgs2.ta4.TimeSeries;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import org.apache.ibatis.annotations.ConstructorArgs;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.net.SocketException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.logging.Logger;
 

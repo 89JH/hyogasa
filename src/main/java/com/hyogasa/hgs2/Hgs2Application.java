@@ -39,6 +39,8 @@ public class Hgs2Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Hgs2Application.class, args);
 		//getCrowling();
+
+		// 실제 운영시 아래 데이터 수집하는 부분 주석 제거해야함.
 		UpbitWsClient uwc = new UpbitWsClient();
 
 		uwc.AccWebSocket();
