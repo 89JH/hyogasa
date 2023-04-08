@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hyogasa.hgs2.dbmd.model.dao.DbMapper">
+    <select id="getInfoList" resultType="com.hyogasa.hgs2.dbmd.model.dto.tradeInfo">
+        SELECT *
+          FROM tradeinfo;
+    </select>
+
+    <insert id="insertData">
+        INSERT INTO tradeinfo(
+            credate
+            , op
+            , hp
+            , lp
+            , tp
+            , vol
+            , tt
+        )
+        VALUES(
+            #{CREDATE}
+            ,#{OP}
+            ,#{HP}
+            ,#{LP}
+            ,#{TP}
+            ,#{VOL}
+            ,#{TT}
+        )
+    </insert>
+</mapper>

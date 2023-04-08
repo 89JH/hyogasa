@@ -41,7 +41,7 @@ public class TradeUpbitService {
      *  > 하나의 인스턴스만 항상 실행되도록 해야 할 상황에서 유용
      *
      * */
-    //@Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 1000)
     public void trade() {
         /** rsi가 40이하 터치 했다는 플래그로 사용 */
         int rsiCnt = 0;
@@ -50,17 +50,26 @@ public class TradeUpbitService {
 
         // 2023-03-09 Duration은 60이 대략 맞음.
         // 2023-03-27 Duration은 대략 66%? -> 60 := 40
+        // 2023-04-08 Duration은 60 := 1분 / 360 := 6분 / 300 := 5분 맞음
         // 300 := 240
-        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 100);
+        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 300);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+
+        /** 파라볼릭 */
         ParabolicSarIndicator pi = new ParabolicSarIndicator(series);
+
+        /** MACD */
         MACDIndicator macd = new MACDIndicator(closePrice, 12, 26);
         EMAIndicator signal = new EMAIndicator(macd, 9);
+
+        /** RSI */
         RSIIndicator rsi = new RSIIndicator(closePrice, 14);
 
+        /** 볼린저밴드 */
         SMAIndicator sma = new SMAIndicator(closePrice, 5);
-        BollingerBandsMiddleIndicator bbmSMA = new BollingerBandsMiddleIndicator(sma);
-        StandardDeviationIndicator standardDeviation = new StandardDeviationIndicator(closePrice, 5);
+        EMAIndicator ema = new EMAIndicator(closePrice, 14);
+        StandardDeviationIndicator standardDeviation = new StandardDeviationIndicator(closePrice, 14);
+        BollingerBandsMiddleIndicator bbmSMA = new BollingerBandsMiddleIndicator(ema);
         BollingerBandsLowerIndicator bblSMA = new BollingerBandsLowerIndicator(bbmSMA, standardDeviation);
         BollingerBandsUpperIndicator bbuSMA = new BollingerBandsUpperIndicator(bbmSMA, standardDeviation);
 
@@ -72,7 +81,6 @@ public class TradeUpbitService {
         BigDecimal bbuVal = new BigDecimal(String.valueOf(bbuSMA.getValue(bbuSMA.getBarSeries().getBarCount() - 1)));
         BigDecimal bbmVal = new BigDecimal(String.valueOf(bbmSMA.getValue(bbmSMA.getBarSeries().getBarCount() - 1)));
         BigDecimal bblVal = new BigDecimal(String.valueOf(bblSMA.getValue(bblSMA.getBarSeries().getBarCount() - 1)));
-
 
         System.out.println("----------------- 지표확인 시작 ---------------------");
         System.out.println("closeVal - " + closeVal);
@@ -135,15 +143,17 @@ public class TradeUpbitService {
 
         // 2. krw가 있으면 매수 프로세스 없으면 매도 프로세스 진행
 //        if(krwBalance.compareTo(new BigDecimal("50000")) > 0) { // 50000원 이상 있으면 매수 프로세스
-//            LOG.info("매수 프로세스 시작");
-//            /** 3. 매수 프로세스
-//             * pre. 아래 프로세스를 타기 전에 rsi가 40 이하를 찍고 반등하는 프로세스 추가? <- 이건 개발해보고 진행상황 보기(20230324 추가함)
-//             * a. rsi 50 이상 60 이하, macd > signal, 현재가 > 파라볼릭
-//             *  > 3가지 항목 모두 만족해야만 매수 진행
-//             *
-//             * b. rsi 23 이하인경우 무조건 매수 진행? ㄴㄴ 지표 하나만 보고 거래하면 안맞는 경우가 더 많음
-//             * */
-//            // rsi가 25%이하이면서, macd > signal 인경우
+            LOG.info("매수 프로세스 시작");
+            /** 3. 매수 프로세스
+             * pre. 아래 프로세스를 타기 전에 rsi가 40 이하를 찍고 반등하는 프로세스 추가? <- 이건 개발해보고 진행상황 보기(20230324 추가함)
+             * a. rsi 50 이상 60 이하, macd > signal, 현재가 > 파라볼릭
+             *  > 3가지 항목 모두 만족해야만 매수 진행
+             *
+             * b. rsi 23 이하인경우 무조건 매수 진행? ㄴㄴ 지표 하나만 보고 거래하면 안맞는 경우가 더 많음
+             * c. rsi 38 이하 찍을때마다 카운트 + 1
+             *    - 카운트 > 1 && macd > signal && rsi > 45 && rsi < 50
+             *  */
+            // rsi가 25%이하이면서, macd > signal 인경우
 //            if((rsiVal.compareTo(new BigDecimal("50")) >= 0 && rsiVal.compareTo(new BigDecimal("60")) < 0) /** rsi 비교 */
 //                    && macdVal.compareTo(signalVal) > 0 /** macd > signal 비교 */
 //                    && closeVal.compareTo(paraVal) > 0 /** 현재가 > 파라볼릭 비교 */) {

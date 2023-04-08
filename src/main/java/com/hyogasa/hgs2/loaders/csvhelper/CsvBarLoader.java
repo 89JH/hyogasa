@@ -71,8 +71,8 @@ public class CsvBarLoader {
             double kilo = bytes / 1024;
             double mega = (bytes / 1024) / 1024;
 
-            if(mega > 100) {
-                LOG.info("파일 크기 1.3메가 초과 mega - " + mega);
+            if(mega > 3) {
+                LOG.info("파일 크기 3메가 초과 mega - " + mega);
                 File file = new File(filePath);
                 File newFile = new File("src/main/resources/coin/" + cn + "/" + cn + "_trade" + new DateTime().getMillis() + ".csv");
 

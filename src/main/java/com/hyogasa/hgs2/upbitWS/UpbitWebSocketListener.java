@@ -2,46 +2,31 @@ package com.hyogasa.hgs2.upbitWS;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.hyogasa.hgs2.api.Util;
-import com.hyogasa.hgs2.loaders.JsonBarsSerializer;
+import com.hyogasa.hgs2.dbmd.model.dao.DbMapper;
+import com.hyogasa.hgs2.dbmd.service.DbService;
 import com.hyogasa.hgs2.loaders.WSLoader;
 import com.hyogasa.hgs2.loaders.csvhelper.CsvBarLoader;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
-import org.apache.tomcat.util.buf.Ascii;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
-import org.ta4j.core.Indicator;
-import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.MACDIndicator;
-import org.ta4j.core.indicators.ParabolicSarIndicator;
-import org.ta4j.core.indicators.RSIIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.volume.ChaikinMoneyFlowIndicator;
-import org.ta4j.core.num.Num;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.logging.Level;
 
 public class UpbitWebSocketListener extends WebSocketListener {
     private static final int NORMAL_CLOSURE_STATUS = 1000;
     private String json;
+    public DbService dbService;
 
     @Override
     public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
@@ -92,32 +77,45 @@ public class UpbitWebSocketListener extends WebSocketListener {
 
 //            if(jObj.get("type").equals("ticker")) {
 //                System.out.println("1 - " + jObj.get("trade_price"));
-                String utcDate = jObj.get("trade_date").toString().substring(0, 4) + "-" + jObj.get("trade_date").toString().substring(4, 6) + "-" + jObj.get("trade_date").toString().substring(6, 8);
-                String utcTime = jObj.get("trade_time").toString().substring(0, 2) + ":" + jObj.get("trade_time").toString().substring(2, 4) + ":" + jObj.get("trade_time").toString().substring(4, 6);
-                String bTs = utcDate + "T" + utcTime + "Z";
+            String utcDate = jObj.get("trade_date").toString().substring(0, 4) + "-" + jObj.get("trade_date").toString().substring(4, 6) + "-" + jObj.get("trade_date").toString().substring(6, 8);
+            String utcTime = jObj.get("trade_time").toString().substring(0, 2) + ":" + jObj.get("trade_time").toString().substring(2, 4) + ":" + jObj.get("trade_time").toString().substring(4, 6);
+            String bTs = utcDate + "T" + utcTime + "Z";
 
 //                System.out.println("utcDat - " + utcDate);
 //                System.out.println("utcTim - " + utcTime);
 
-                String ts = Util.convertUtctoLocal3(bTs);
-                String op = String.valueOf(jObj.get("opening_price"));
-                String hp = String.valueOf(jObj.get("high_price"));
-                String lp = String.valueOf(jObj.get("low_price"));
-                String cp = String.valueOf(jObj.get("trade_price"));
-                String vol = String.valueOf(jObj.get("trade_volume"));
+            String ts = Util.convertUtctoLocal3(bTs);
+            String op = String.valueOf(jObj.get("opening_price"));
+            String hp = String.valueOf(jObj.get("high_price"));
+            String lp = String.valueOf(jObj.get("low_price"));
+            String cp = String.valueOf(jObj.get("trade_price"));
+            String vol = String.valueOf(jObj.get("trade_volume"));
 
-                BarSeries series = WSLoader.loadSeries(ts, op, hp, lp, cp, vol);
-                // WebSocket 오프닝, 클로즈, 저가 사용 안하고 현재가만 사용해서 처리 가능
-                // 추후 필요하면 type - ticker(현재가) 분기 태워서 사용
-                //BarSeries series = WSLoader.loadSeries(ts, cp, cp, cp, cp, vol);
+            BarSeries series = WSLoader.loadSeries(ts, op, hp, lp, cp, vol);
+            // WebSocket 오프닝, 클로즈, 저가 사용 안하고 현재가만 사용해서 처리 가능
+            // 추후 필요하면 type - ticker(현재가) 분기 태워서 사용
+            //BarSeries series = WSLoader.loadSeries(ts, cp, cp, cp, cp, vol);
 
-                //System.out.println("ts - " + ts.substring(0, 10).replaceAll("-", ""));
+            //System.out.println("ts - " + ts.substring(0, 10).replaceAll("-", ""));
 
-                String coinName = String.valueOf(jObj.get("code"));
-                String tradeDate = ts.substring(0, 10).replaceAll("-", "");
+            String coinName = String.valueOf(jObj.get("code"));
+            String tradeDate = ts.substring(0, 10).replaceAll("-", "");
 
-                CsvBarLoader.persistSeries(series, tradeDate, coinName);
-                // 2023-03-14 저장하는데까지는 느리지 않음.
+            CsvBarLoader.persistSeries(series, tradeDate, coinName);
+            // 2023-03-14 저장하는데까지는 느리지 않음.
+
+
+            System.out.println("테스트1111");
+            HashMap<String, String> params = new HashMap<String, String>();
+            params.put("CREDATE", ts);
+            params.put("OP", op);
+            params.put("HP", hp);
+            params.put("LP", lp);
+            params.put("TP", cp);
+            params.put("VOL", vol);
+            params.put("TT", String.valueOf(jObj.get("ask_bid")));
+            System.out.println("테스트12222");
+            dbService.insertData(params);
 
 
                 // 2023-03-09 Duration은 60이 대략 맞음.
