@@ -52,7 +52,7 @@ public class TradeUpbitService {
         // 2023-03-27 Duration은 대략 66%? -> 60 := 40
         // 2023-04-08 Duration은 60 := 1분 / 360 := 6분 / 300 := 5분 맞음
         // 300 := 240
-        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 300);
+        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 60);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 
         /** 파라볼릭 */
@@ -142,109 +142,120 @@ public class TradeUpbitService {
         }
 
         // 2. krw가 있으면 매수 프로세스 없으면 매도 프로세스 진행
-//        if(krwBalance.compareTo(new BigDecimal("50000")) > 0) { // 50000원 이상 있으면 매수 프로세스
+        if(krwBalance.compareTo(new BigDecimal("50000")) > 0) { // 50000원 이상 있으면 매수 프로세스
             LOG.info("매수 프로세스 시작");
-            /** 3. 매수 프로세스
-             * pre. 아래 프로세스를 타기 전에 rsi가 40 이하를 찍고 반등하는 프로세스 추가? <- 이건 개발해보고 진행상황 보기(20230324 추가함)
-             * a. rsi 50 이상 60 이하, macd > signal, 현재가 > 파라볼릭
-             *  > 3가지 항목 모두 만족해야만 매수 진행
+            /** 매수 진행 체크 */
+            int bidChk = 0;
+
+            /** 3. 매수 프로세스(2023-04-15 업데이트함)
+             * a. macd - signal이 음수인 경우 (macd < signal)
+             * macd - signal <= -8000 && macd < signal && rsi <= 35 && 볼밴하단 >= 현재가 매수 진행
              *
-             * b. rsi 23 이하인경우 무조건 매수 진행? ㄴㄴ 지표 하나만 보고 거래하면 안맞는 경우가 더 많음
-             * c. rsi 38 이하 찍을때마다 카운트 + 1
-             *    - 카운트 > 1 && macd > signal && rsi > 45 && rsi < 50
+             * b. macd - signal이 양수인 경우 (macd > signal)
+             * macd - signal >= 5000 && macd > signal && 50 <= rsi <= 60 && 볼밴중단 <= 현재가 매수 진행
+             *
+             *
+             * pre. 아래 프로세스를 타기 전에 rsi가 40 이하를 찍고 반등하는 프로세스 추가? <- 이건 개발해보고 진행상황 보기(20230324 추가함)
              *  */
-            // rsi가 25%이하이면서, macd > signal 인경우
-//            if((rsiVal.compareTo(new BigDecimal("50")) >= 0 && rsiVal.compareTo(new BigDecimal("60")) < 0) /** rsi 비교 */
-//                    && macdVal.compareTo(signalVal) > 0 /** macd > signal 비교 */
-//                    && closeVal.compareTo(paraVal) > 0 /** 현재가 > 파라볼릭 비교 */) {
-//                // 매수 진행
-//                try {
-//                    BigDecimal bidVolume = new BigDecimal("0.01");
-//                    bidVolume = krwBalance.divide(closeVal.multiply(new BigDecimal("1.01")), 5, BigDecimal.ROUND_DOWN);
-//
-//                    HashMap<String, String> trdParams = new HashMap<String, String>();
-//                    trdParams.put("side", "bid");
-//                    trdParams.put("market", "KRW-BTC");
-//                    trdParams.put("volume", bidVolume.toPlainString());
-//                    trdParams.put("price", closeVal.toPlainString());
-//                    trdParams.put("ord_type", "limit");
-//                    trdParams.put("identifier", ("JHJ" + now.getTime()));
-//                    String result = api.callApi(orders, "POST", trdParams);
-//
-//                    rsiCnt = 0;
-//                    LOG.info("매수 결과 - " + result);
-//                }catch (UnsupportedEncodingException uee) {
-//                    LOG.info("매수 uee - " + uee.getMessage());
-//                }catch (NoSuchAlgorithmException nae) {
-//                    LOG.info("매수 nae - " + nae.getMessage());
-//                }
-//            }
-//
-//            LOG.info("매수 프로세스 종료");
-//        }else { // 원화가 없으면 매도 프로세스 진행
-//            LOG.info("매도 프로세스 진행");
-//            int askCnt = 0;
-//            /** 4. 매도 프로세스
-//             * -- 손절 프로세스
-//             * a. 수익률이 - 0.4% 이상되면 무조건 손절 진행(%는 추후 확인해보고 변경해보기)
-//             *
-//             * -- 수익 프로세스
-//             * pre. 수익률이 0.4% 이상인데 rsi 60이하, macd > signal, 현재가 > 파라볼릭
-//             *  > 현재 포지션 유지
-//             * a. 수익률이 0.4% 이면 매도 프로세스 진행
-//             *  > rsi 65
-//             * b. 수익률이 0.2% 혹은 0.3% 인데, rsi 65 이상 / signal > macd / 현재가 < 파라볼릭
-//             *  > 한가지라도 충족되면 매도 진행 < 두가지 이상 충족되면 매도 진행
-//             *
-//             * 보류1. rsi가 65 이상부터 매도 프로세스 진행
-//             *  > rsi가 65 이상이지만, macd > signal 이고, 파라볼릭sar 지표가 현재가격보다 낮은경우 포지션 유지
-//             *
-//             * 보류2. rsi 70이상, macd < signal, 현재가 < 파라볼릭
-//             *  > 2가지 이상 매핑되면 매도 진행
-//             * */
-//
-//            /** 매도 프로세스 수익률 -0.9% <- 손절은 일단 빼보자 ㄴㄴ 손절도 칼같이해야할듯함 */
-//            if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("0.991"))) <= 0) {
-//                askCnt++;
-//            }else {
-//                /** 수익률이 0.4% 이상이면 */
-//                if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("1.004"))) >= 0) {
-//                    /** pre. 수익률이 0.4% 이상인데 rsi 60이하, macd > signal, 현재가 > 파라볼릭 이면 포지션 유지 */
-//                    if(rsiVal.compareTo(new BigDecimal("60")) < 0 && macdVal.compareTo(signalVal) > 0 && closeVal.compareTo(paraVal) > 0) {
-//                        return;
-//                    }else {
-//                        askCnt++;
-//                    }
-//                /** 수익률이 0.2% 이상이면 */
-//                }else if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("1.002"))) >= 0) {
-//                    if(rsiVal.compareTo(new BigDecimal("65")) >= 0 || macdVal.compareTo(signalVal) < 0 || closeVal.compareTo(paraVal) < 0) {   // rsi 65 이상
-//                        askCnt++;
-//                    }
-//                }
-//            }
-//
-//            /** 매도 주문 실행 */
-//            if(askCnt != 0) {
-//                try {
-//                    HashMap<String, String> trdParams = new HashMap<String, String>();
-//                    trdParams.put("side", "ask");
-//                    trdParams.put("market", "KRW-BTC");
-//                    trdParams.put("volume", String.valueOf(balance));
-//                    trdParams.put("price", "");
-//                    trdParams.put("ord_type", "market");
-//                    //trdParams.put("ord_type", "limit");
-//                    trdParams.put("identifier", ("JHJ" + now.getTime()));
-//                    String result = api.callApi(orders, "POST", trdParams);
-//
-//                    LOG.info("매도 결과 - " + result);
-//                } catch (UnsupportedEncodingException uee) {
-//                    LOG.info("매도 uee - " + uee.getMessage());
-//                } catch (NoSuchAlgorithmException nae) {
-//                    LOG.info("매도 nae - " + nae.getMessage());
-//                }
-//            }
-//
-//            LOG.info("매도 프로세스 종료");
-//        }
+
+            // a. macd - signal이 음수인경우
+            if((macdVal.compareTo(signalVal) < 0) // macd < signal
+                && (macdVal.subtract(signalVal).compareTo(new BigDecimal("-8000")) <= 0) // macd - signal <= -8000
+                && (rsiVal.compareTo(new BigDecimal("35")) <= 0) // rsi 35 이하
+                && (closeVal.compareTo(bblVal) <= 0) // 현재가 <= 볼밴하단
+            ) {
+                bidChk = 1;
+            // b. macd - signal이 양수인경우
+            }else if((macdVal.compareTo(signalVal) > 0)  // macd > signal
+                && (macdVal.subtract(signalVal).compareTo(new BigDecimal("5000")) >= 0) // macd - signal >= 5000
+                && (rsiVal.compareTo(new BigDecimal("70")) <= 0) // rsi 70 이하
+                && (closeVal.compareTo(bbmVal) >= 0) // 현재가 >= 볼밴중단
+            ) {
+                bidChk = 1;
+            }
+
+            if(bidChk != 0) {
+                try {
+                    BigDecimal bidVolume = new BigDecimal("0.01");
+                    bidVolume = krwBalance.divide(closeVal.multiply(new BigDecimal("1.01")), 5, BigDecimal.ROUND_DOWN);
+
+                    HashMap<String, String> trdParams = new HashMap<String, String>();
+                    trdParams.put("side", "bid");
+                    trdParams.put("market", "KRW-BTC");
+                    trdParams.put("volume", bidVolume.toPlainString());
+                    trdParams.put("price", closeVal.toPlainString());
+                    trdParams.put("ord_type", "limit");
+                    trdParams.put("identifier", ("JHJ" + now.getTime()));
+                    String result = api.callApi(orders, "POST", trdParams);
+
+                    LOG.info("매수 결과 - " + result);
+                }catch (UnsupportedEncodingException uee) {
+                    LOG.info("매수 uee - " + uee.getMessage());
+                }catch (NoSuchAlgorithmException nae) {
+                    LOG.info("매수 nae - " + nae.getMessage());
+                }
+            }
+
+            LOG.info("매수 프로세스 종료");
+
+        }else { // 원화가 없으면 매도 프로세스 진행
+            LOG.info("매도 프로세스 진행");
+            int askCnt = 0;
+            /** 4. 매도 프로세스
+             * -- 손절 프로세스
+             * a. 수익률이 -0.5%(:= -0.6 수수료 포함) 이상되면 무조건 손절 진행(%는 추후 확인해보고 변경해보기)
+             *
+             * -- 수익 프로세스
+             * a. macd - signal >= 10000
+             * b. rsi >= 68
+             * c. 현재가 >= 볼밴상단
+             * a,b,c 중 2가지 항목 만족하면 매도 프로세스 진행
+             *
+             * 2023-04-16 현재 수익 %는 포함 안시켰는데, 이렇게 진행해보고 추후 %도 필요하면 추가
+             * */
+
+            /** 매도 프로세스 수익률 -0.9% <- 손절은 일단 빼보자 ㄴㄴ 손절도 칼같이해야할듯함 */
+            if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("0.995"))) <= 0) {
+                askCnt++;
+            }else {
+                // a. macd - signal >= 10000
+                if(macdVal.subtract(signalVal).compareTo(new BigDecimal("10000")) >= 0) {
+                    askCnt++;
+                }
+
+                // b. rsi >= 68
+                if(rsiVal.compareTo(new BigDecimal("68")) >= 0) {
+                    askCnt++;
+                }
+
+                // c. 현재가 >= 볼밴상단
+                if(closeVal.compareTo(bbuVal) >= 0) {
+                    askCnt++;
+                }
+            }
+
+            /** 매도 주문 실행 */
+            if(askCnt >= 2) {
+                try {
+                    HashMap<String, String> trdParams = new HashMap<String, String>();
+                    trdParams.put("side", "ask");
+                    trdParams.put("market", "KRW-BTC");
+                    trdParams.put("volume", String.valueOf(balance));
+                    trdParams.put("price", "");
+                    trdParams.put("ord_type", "market");
+                    //trdParams.put("ord_type", "limit");
+                    trdParams.put("identifier", ("JHJ" + now.getTime()));
+                    String result = api.callApi(orders, "POST", trdParams);
+
+                    LOG.info("매도 결과 - " + result);
+                } catch (UnsupportedEncodingException uee) {
+                    LOG.info("매도 uee - " + uee.getMessage());
+                } catch (NoSuchAlgorithmException nae) {
+                    LOG.info("매도 nae - " + nae.getMessage());
+                }
+            }
+
+            LOG.info("매도 프로세스 종료");
+        }
     }
 }
