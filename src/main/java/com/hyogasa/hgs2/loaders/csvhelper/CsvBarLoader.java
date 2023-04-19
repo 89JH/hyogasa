@@ -89,7 +89,7 @@ public class CsvBarLoader {
                     // 기본적으로 3만 라인은 있어야 비슷하게 지표가 맞는다.
                     // 위에는 틀렸다. 대략 1시간 데이터만 남겨놓으면 될듯하다 15천 라인 이상인 경우에 파일 재생성
                     // 그냥 대략적으로 5천라인 가지고 진행 - 20230323
-                    long lineCount = 10000;
+                    long lineCount = 2000;
                     // 불러온 파일 크기 구하기
                     long fileLength = accFile.length();
                     // 마지막 부터 차례로 조회
@@ -119,69 +119,71 @@ public class CsvBarLoader {
 
             // 20230328 부터 시작!!!!!
             // csv 파일의 마지막 로우 가져와서 동일한 '분(minutes)'이면 기존 라인 업데이트(delete - insert)
-
             /** 새로 받아온 데이터가 이전 시간과 똑같으면(hh:mm) 기존 라인 삭제 후 입력 시작 */
             // 랜덤액세스파일함수로 파일 읽기
             RandomAccessFile raf = new RandomAccessFile(filePath, "rw");
 
-            // 이전 데이터 담아둘 스트링버퍼
-            StringBuffer sb = new StringBuffer();
+            if(raf.length() != 0 ) {
 
-            // 읽어온 파일의 총 길이
-            long fileLength = raf.length();
-            // 마지막 라인의 시작점 담기위한 변수
-            long end = 0;
+                // 이전 데이터 담아둘 스트링버퍼
+                StringBuffer sb = new StringBuffer();
 
-            // 파일의 총 길이 - 2 부터 빼가면서 삭제할 라인의 시작위치 구하기
-            // 파일 총길이 -2 한 이유는 0은 마지막 빈라인이고, -1은 끝지점의 \'n'이 걸려서 -2부터 시작
-            for(long pt = fileLength - 2; pt >= 0; pt--) {
-                // 시작 위치 설정
-                raf.seek(pt);
+                // 읽어온 파일의 총 길이
+                long fileLength = raf.length();
+                // 마지막 라인의 시작점 담기위한 변수
+                long end = 0;
 
-                // 해당 위치의 캐릭터 값 구하기
-                char c = (char) raf.read();
+                // 파일의 총 길이 - 2 부터 빼가면서 삭제할 라인의 시작위치 구하기
+                // 파일 총길이 -2 한 이유는 0은 마지막 빈라인이고, -1은 끝지점의 \'n'이 걸려서 -2부터 시작
+                for(long pt = fileLength - 2; pt >= 0; pt--) {
+                    // 시작 위치 설정
+                    raf.seek(pt);
 
-                // 구하다가 개행문자 만나면 종료
-                if(c == '\n') {
-                    end = pt;
-                    break;
+                    // 해당 위치의 캐릭터 값 구하기
+                    char c = (char) raf.read();
+
+                    // 구하다가 개행문자 만나면 종료
+                    if(c == '\n') {
+                        end = pt;
+                        break;
+                    }
+
+                    // 각 값 담아두기
+                    sb.insert(0, c);
                 }
 
-                // 각 값 담아두기
-                sb.insert(0, c);
-            }
+                // 위에서 구한 마지막 라인의 데이터를 ',' 구분자로 분리
+                String[] arr = String.valueOf(sb).split(",");
 
-            // 위에서 구한 마지막 라인의 데이터를 ',' 구분자로 분리
-            String[] arr = String.valueOf(sb).split(",");
+                // 마지막 라인 시간 구하기 1
+                SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
-            // 마지막 라인 시간 구하기 1
-            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
+                // 마지막라인 시간 구하기 2
+                Timestamp ts = new Timestamp(Long.parseLong(arr[1]));
+                String preDate = sdf.format(ts);
 
-            // 마지막라인 시간 구하기 2
-            Timestamp ts = new Timestamp(Long.parseLong(arr[1]));
-            String preDate = sdf.format(ts);
+                // 현재시간(*신규 데이터의 시간) 확인
+                String nowDate = sdf.format(exportableSeries.ohlc.get("endTime"));
 
-            // 현재시간(*신규 데이터의 시간) 확인
-            String nowDate = sdf.format(exportableSeries.ohlc.get("endTime"));
+                // 신규 데이터의 시간(hh:mm)이 이전 데이터와 같으면
+                if(nowDate.equals(preDate)) {
+                    // 이전 라인 담아두는 변수 추가
+                    StringBuffer newSb = new StringBuffer(String.valueOf(sb));
 
-            // 신규 데이터의 시간(hh:mm)이 이전 데이터와 같으면
-            if(nowDate.equals(preDate)) {
-                // 이전 라인 담아두는 변수 추가
-                StringBuffer newSb = new StringBuffer(String.valueOf(sb));
+                   // 이전 라인 길이만큼 " "로 각 위치 초기화
+                    for(int i=0; i<newSb.length(); i++) {
+                        newSb = newSb.replace(i, i + 1, " ");
+                    }
 
-               // 이전 라인 길이만큼 " "로 각 위치 초기화
-                for(int i=0; i<newSb.length(); i++) {
-                    newSb = newSb.replace(i, i + 1, " ");
+                    // 초기화한 길이만큼 raf(읽어온 파일 데이터)의 값도 초기화
+                    byte[] blankVal = String.valueOf(newSb).getBytes("UTF-8");
+                    raf.write(blankVal, 0, blankVal.length);
+
+                    raf.setLength(end + 1);
                 }
+                /** 새로 받아온 데이터가 이전 시간과 똑같으면(hh:mm) 기존 라인 삭제 후 입력 종료 */
 
-                // 초기화한 길이만큼 raf(읽어온 파일 데이터)의 값도 초기화
-                byte[] blankVal = String.valueOf(newSb).getBytes("UTF-8");
-                raf.write(blankVal, 0, blankVal.length);
-
-                raf.setLength(end + 1);
             }
-            /** 새로 받아온 데이터가 이전 시간과 똑같으면(hh:mm) 기존 라인 삭제 후 입력 종료 */
-
             bw = new BufferedWriter(new FileWriter(ff, true));
             String wData = "";
 
@@ -225,11 +227,11 @@ public class CsvBarLoader {
         BufferedReader br = null;
 
         try {
-            LOG.info("시작 - " + LocalTime.now());
+            //LOG.info("시작 - " + LocalTime.now());
             csvReader = new CSVReader(new FileReader(fileName));
             lines = csvReader.readAll();
-            LOG.info("종료 - " + LocalTime.now());
-            LOG.info("사이즈 - " + lines.get(lines.size() - 1));
+            //LOG.info("종료 - " + LocalTime.now());
+            //LOG.info("사이즈 - " + lines.get(lines.size() - 1));
             //System.out.println(lines);
         }catch (Exception e) {
             //Logger.getLogger(CsvBarLoader.class.getName()).log(Level.SEVERE, "Unable to load trades from CSV", e);
@@ -283,7 +285,7 @@ public class CsvBarLoader {
      */
     @SuppressWarnings("deprecation")
     private static void buildSeries(BarSeries series, ZonedDateTime beginTime, ZonedDateTime endTime, int duration, List<String[]> lines) {
-        LOG.info("BuildSeries 시작- " + LocalTime.now());
+        //LOG.info("BuildSeries 시작- " + LocalTime.now());
         Duration barDuration = Duration.ofSeconds(duration);
         ZonedDateTime barEndTime = beginTime;
         // line number of trade data
@@ -321,6 +323,6 @@ public class CsvBarLoader {
             }
         } while (barEndTime.isBefore(endTime));
 
-        LOG.info("BuildSeries 종료- " + LocalTime.now());
+        //LOG.info("BuildSeries 종료- " + LocalTime.now());
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 
 import org.ta4j.core.indicators.*;
+import org.ta4j.core.indicators.adx.ADXIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
@@ -49,10 +50,11 @@ public class TradeUpbitService {
         Date now = new Date();
 
         // 2023-03-09 Duration은 60이 대략 맞음.
-        // 2023-03-27 Duration은 대략 66%? -> 60 := 40
+        // 2023-03-27 Duration은 대략 66%? -> 60 := 40.
         // 2023-04-08 Duration은 60 := 1분 / 360 := 6분 / 300 := 5분 맞음
         // 300 := 240
-        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 60);
+        // 10이 1분봉은 딱 맞음.
+        BarSeries series = CsvBarLoader.loadSeries("KRW-BTC", 10);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 
         /** 파라볼릭 */
@@ -73,6 +75,9 @@ public class TradeUpbitService {
         BollingerBandsLowerIndicator bblSMA = new BollingerBandsLowerIndicator(bbmSMA, standardDeviation);
         BollingerBandsUpperIndicator bbuSMA = new BollingerBandsUpperIndicator(bbmSMA, standardDeviation);
 
+        /** ADX */
+        ADXIndicator adxIndicator = new ADXIndicator(series, 14);
+
         BigDecimal closeVal = new BigDecimal(String.valueOf(closePrice.getValue(closePrice.getBarSeries().getBarCount() - 1)));
         BigDecimal rsiVal = new BigDecimal(String.valueOf(rsi.getValue(rsi.getBarSeries().getBarCount() - 1))).setScale(2, BigDecimal.ROUND_HALF_UP);
         BigDecimal macdVal = new BigDecimal(String.valueOf(macd.getValue(macd.getBarSeries().getBarCount() - 1))).setScale(2, BigDecimal.ROUND_HALF_UP);
@@ -81,6 +86,7 @@ public class TradeUpbitService {
         BigDecimal bbuVal = new BigDecimal(String.valueOf(bbuSMA.getValue(bbuSMA.getBarSeries().getBarCount() - 1)));
         BigDecimal bbmVal = new BigDecimal(String.valueOf(bbmSMA.getValue(bbmSMA.getBarSeries().getBarCount() - 1)));
         BigDecimal bblVal = new BigDecimal(String.valueOf(bblSMA.getValue(bblSMA.getBarSeries().getBarCount() - 1)));
+
 
         System.out.println("----------------- 지표확인 시작 ---------------------");
         System.out.println("closeVal - " + closeVal);
@@ -91,6 +97,7 @@ public class TradeUpbitService {
         System.out.println("b-upper - " + bbuVal);
         System.out.println("b-middle - " + bbmVal);
         System.out.println("b-lower - " + bblVal);
+        System.out.println("adxVal1 - " + adxIndicator.getValue(adxIndicator.getBarSeries().getBarCount() - 1));
         System.out.println("----------------- 지표확인 종료 ---------------------");
 
         // 보유자산 조회 시작
@@ -177,14 +184,19 @@ public class TradeUpbitService {
             if(bidChk != 0) {
                 try {
                     BigDecimal bidVolume = new BigDecimal("0.01");
-                    bidVolume = krwBalance.divide(closeVal.multiply(new BigDecimal("1.01")), 5, BigDecimal.ROUND_DOWN);
+                    bidVolume = krwBalance.divide(closeVal.multiply(new BigDecimal("1.02")), 5, BigDecimal.ROUND_DOWN);
 
                     HashMap<String, String> trdParams = new HashMap<String, String>();
                     trdParams.put("side", "bid");
                     trdParams.put("market", "KRW-BTC");
-                    trdParams.put("volume", bidVolume.toPlainString());
+                    /** 지정가 매수 */
+//                    trdParams.put("volume", bidVolume.toPlainString());
+//                    trdParams.put("price", closeVal.toPlainString());
+//                    trdParams.put("ord_type", "limit");
+                    /** 시장가 매수 */
+                    trdParams.put("volume", "");
                     trdParams.put("price", closeVal.toPlainString());
-                    trdParams.put("ord_type", "limit");
+                    trdParams.put("ord_type", "price");
                     trdParams.put("identifier", ("JHJ" + now.getTime()));
                     String result = api.callApi(orders, "POST", trdParams);
 
@@ -201,6 +213,8 @@ public class TradeUpbitService {
         }else { // 원화가 없으면 매도 프로세스 진행
             LOG.info("매도 프로세스 진행");
             int askCnt = 0;
+            int dirCnt = 0;
+            int rorCnt = 0; // return of ratio
             /** 4. 매도 프로세스
              * -- 손절 프로세스
              * a. 수익률이 -0.5%(:= -0.6 수수료 포함) 이상되면 무조건 손절 진행(%는 추후 확인해보고 변경해보기)
@@ -209,14 +223,15 @@ public class TradeUpbitService {
              * a. macd - signal >= 10000
              * b. rsi >= 68
              * c. 현재가 >= 볼밴상단
-             * a,b,c 중 2가지 항목 만족하면 매도 프로세스 진행
+             * d. 수익률 0.2% 이상 <- 2023-04-19 추가
+             * d는 기본으로 하고, a,b,c 중 2가지 항목 만족하면 매도 프로세스 진행
              *
              * 2023-04-16 현재 수익 %는 포함 안시켰는데, 이렇게 진행해보고 추후 %도 필요하면 추가
              * */
 
             /** 매도 프로세스 수익률 -0.9% <- 손절은 일단 빼보자 ㄴㄴ 손절도 칼같이해야할듯함 */
             if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("0.995"))) <= 0) {
-                askCnt++;
+                dirCnt++;
             }else {
                 // a. macd - signal >= 10000
                 if(macdVal.subtract(signalVal).compareTo(new BigDecimal("10000")) >= 0) {
@@ -232,10 +247,15 @@ public class TradeUpbitService {
                 if(closeVal.compareTo(bbuVal) >= 0) {
                     askCnt++;
                 }
+
+                // d. 수익률 0.2% 이상
+                if(closeVal.compareTo(avgPrice.multiply(new BigDecimal("1.002"))) >= 0) {
+                    rorCnt++;
+                }
             }
 
             /** 매도 주문 실행 */
-            if(askCnt >= 2) {
+            if((rorCnt == 1 && askCnt >= 2) || dirCnt == 1) {
                 try {
                     HashMap<String, String> trdParams = new HashMap<String, String>();
                     trdParams.put("side", "ask");
