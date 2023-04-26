@@ -105,17 +105,17 @@ public class UpbitWebSocketListener extends WebSocketListener {
             // 2023-03-14 저장하는데까지는 느리지 않음.
 
 
-            System.out.println("테스트1111");
-            HashMap<String, String> params = new HashMap<String, String>();
-            params.put("CREDATE", ts);
-            params.put("OP", op);
-            params.put("HP", hp);
-            params.put("LP", lp);
-            params.put("TP", cp);
-            params.put("VOL", vol);
-            params.put("TT", String.valueOf(jObj.get("ask_bid")));
-            System.out.println("테스트12222");
-            dbService.insertData(params);
+//            System.out.println("테스트1111");
+//            HashMap<String, String> params = new HashMap<String, String>();
+//            params.put("CREDATE", ts);
+//            params.put("OP", op);
+//            params.put("HP", hp);
+//            params.put("LP", lp);
+//            params.put("TP", cp);
+//            params.put("VOL", vol);
+//            params.put("TT", String.valueOf(jObj.get("ask_bid")));
+//            System.out.println("테스트12222");
+//            dbService.insertData(params);
 
 
                 // 2023-03-09 Duration은 60이 대략 맞음.

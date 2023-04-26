@@ -71,8 +71,10 @@ public class CsvBarLoader {
             double kilo = bytes / 1024;
             double mega = (bytes / 1024) / 1024;
 
-            if(mega > 3) {
-                LOG.info("파일 크기 3메가 초과 mega - " + mega);
+            //System.out.println("파일사이즈 - " + mega);
+
+            if(mega > 1) {
+                LOG.info("파일 크기 1메가 초과 mega - " + mega);
                 File file = new File(filePath);
                 File newFile = new File("src/main/resources/coin/" + cn + "/" + cn + "_trade" + new DateTime().getMillis() + ".csv");
 
@@ -89,7 +91,7 @@ public class CsvBarLoader {
                     // 기본적으로 3만 라인은 있어야 비슷하게 지표가 맞는다.
                     // 위에는 틀렸다. 대략 1시간 데이터만 남겨놓으면 될듯하다 15천 라인 이상인 경우에 파일 재생성
                     // 그냥 대략적으로 5천라인 가지고 진행 - 20230323
-                    long lineCount = 2000;
+                    long lineCount = 1000;
                     // 불러온 파일 크기 구하기
                     long fileLength = accFile.length();
                     // 마지막 부터 차례로 조회
