@@ -5,6 +5,8 @@ import com.opencsv.exceptions.CsvException;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
@@ -15,7 +17,6 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.*;
-import java.util.logging.Logger;
 import java.util.*;
 
 
@@ -26,7 +27,7 @@ import java.util.List;
 
 public class CsvBarLoader {
 
-    private static final Logger LOG = Logger.getLogger(CsvBarLoader.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(CsvBarLoader.class.getName());
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -44,6 +45,7 @@ public class CsvBarLoader {
             try {
                 Files.createDirectory(path);
             }catch (IOException ioe) {
+                LOG.debug("폴더생성오류 ioe - " + ioe.getMessage());
                 ioe.printStackTrace();
             }
         }
@@ -60,6 +62,7 @@ public class CsvBarLoader {
                 try {
                     Files.createFile(Path.of(filePath));
                 }catch (IOException ioe) {
+                    LOG.debug("파일데이터생성오류 ioe - " + ioe.getMessage());
                     ioe.printStackTrace();
                 }
 
@@ -114,6 +117,7 @@ public class CsvBarLoader {
 
                     Files.write(fileData, Collections.singleton(lastLine));
                 }catch (IOException ioe) {
+                    LOG.debug("1메가초과파일백업 ioe - " + ioe.getMessage());
                     ioe.printStackTrace();
                 }
 
@@ -203,6 +207,7 @@ public class CsvBarLoader {
 
             //LOG.info("Bar series '" + exportableSeries.ohlc.get("coinName") + "' successfully saved to '" + filename + "'");
         } catch (IOException e) {
+            LOG.debug("csv데이터 e - " + e.getMessage());
             e.printStackTrace();
             //LOG.log(Level.SEVERE, "Unable to store bars in JSON", e);
         } finally {
@@ -211,6 +216,7 @@ public class CsvBarLoader {
                     bw.flush();
                     bw.close();
                 } catch (IOException e) {
+                    LOG.debug("버퍼writer관련 e - " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -236,12 +242,14 @@ public class CsvBarLoader {
             //LOG.info("사이즈 - " + lines.get(lines.size() - 1));
             //System.out.println(lines);
         }catch (Exception e) {
+            LOG.debug("loadSeries e - " + e.getMessage());
             //Logger.getLogger(CsvBarLoader.class.getName()).log(Level.SEVERE, "Unable to load trades from CSV", e);
         }finally {
             if(csvReader != null) {
                 try{
                     csvReader.close();
                 }catch (IOException ioe) {
+                    LOG.debug("csvReader ioe - " + ioe.getMessage());
                     ioe.printStackTrace();
                 }
             }

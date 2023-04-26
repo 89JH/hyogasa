@@ -8,6 +8,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -24,13 +26,12 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class TradeUpbitService {
     private final UpbitMapper upbitMapper;
-    private static final Logger LOG = Logger.getLogger(TradeUpbitService.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(TradeUpbitService.class.getName());
     static ApiClient api = new ApiClient("Oi0v0KwJU8GJZdbq72r2rWSJp4ctXjVAp0Wk38qx"
             , "f5EMue3x1bVEFTsawOJDfp6xh8tPpPLWtiibhRVx");
 
@@ -87,18 +88,17 @@ public class TradeUpbitService {
         BigDecimal bbmVal = new BigDecimal(String.valueOf(bbmSMA.getValue(bbmSMA.getBarSeries().getBarCount() - 1)));
         BigDecimal bblVal = new BigDecimal(String.valueOf(bblSMA.getValue(bblSMA.getBarSeries().getBarCount() - 1)));
 
-
-        System.out.println("----------------- 지표확인 시작 ---------------------");
-        System.out.println("closeVal - " + closeVal);
-        System.out.println("rsiVal - " + rsiVal);
-        System.out.println("macdVal - " + macdVal);
-        System.out.println("signalVal - " + signalVal);
-        System.out.println("paraVal - " + paraVal);
-        System.out.println("b-upper - " + bbuVal);
-        System.out.println("b-middle - " + bbmVal);
-        System.out.println("b-lower - " + bblVal);
-        System.out.println("adxVal1 - " + adxIndicator.getValue(adxIndicator.getBarSeries().getBarCount() - 1));
-        System.out.println("----------------- 지표확인 종료 ---------------------");
+        LOG.info("----------------- 지표확인 시작 ---------------------");
+        LOG.info("closeVal - " + closeVal);
+        LOG.info("rsiVal - " + rsiVal);
+        LOG.info("macdVal - " + macdVal);
+        LOG.info("signalVal - " + signalVal);
+        LOG.info("paraVal - " + paraVal);
+        LOG.info("b-upper - " + bbuVal);
+        LOG.info("b-middle - " + bbmVal);
+        LOG.info("b-lower - " + bblVal);
+        LOG.info("adxVal1 - " + adxIndicator.getValue(adxIndicator.getBarSeries().getBarCount() - 1));
+        LOG.info("----------------- 지표확인 종료 ---------------------");
 
         // 보유자산 조회 시작
         BigDecimal krwBalance = new BigDecimal("0.01"); // 주문가능원화 to BigDecimal
@@ -135,11 +135,11 @@ public class TradeUpbitService {
             }
 
         } catch (UnsupportedEncodingException uee) {
-            LOG.info("계좌정보 uee - " + uee.getMessage());
+            LOG.debug("계좌정보 uee - " + uee.getMessage());
         } catch (NoSuchAlgorithmException nae) {
-            LOG.info("계좌정보 nae - " + nae.getMessage());
+            LOG.debug("계좌정보 nae - " + nae.getMessage());
         } catch (ParseException pe) {
-            LOG.info("계좌정보 pe - " + pe.getMessage());
+            LOG.debug("계좌정보 pe - " + pe.getMessage());
         }
         // 보유자산 조회 종료
 
@@ -202,9 +202,9 @@ public class TradeUpbitService {
 
                     LOG.info("매수 결과 - " + result);
                 }catch (UnsupportedEncodingException uee) {
-                    LOG.info("매수 uee - " + uee.getMessage());
+                    LOG.debug("매수 uee - " + uee.getMessage());
                 }catch (NoSuchAlgorithmException nae) {
-                    LOG.info("매수 nae - " + nae.getMessage());
+                    LOG.debug("매수 nae - " + nae.getMessage());
                 }
             }
 
@@ -269,9 +269,9 @@ public class TradeUpbitService {
 
                     LOG.info("매도 결과 - " + result);
                 } catch (UnsupportedEncodingException uee) {
-                    LOG.info("매도 uee - " + uee.getMessage());
+                    LOG.debug("매도 uee - " + uee.getMessage());
                 } catch (NoSuchAlgorithmException nae) {
-                    LOG.info("매도 nae - " + nae.getMessage());
+                    LOG.debug("매도 nae - " + nae.getMessage());
                 }
             }
 
